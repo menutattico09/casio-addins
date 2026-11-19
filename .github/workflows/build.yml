@@ -1,0 +1,52 @@
+name: Build
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        app: [matematica, orologio]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dipendenze
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake python3 python3-pip git wget curl pkg-config libusb-1.0-0-dev libpng-dev libudev-dev libmpfr-dev libmpc-dev libgmp-dev libppl-dev flex bison texinfo
+
+      - name: Cache toolchain
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.local
+          key: fxsdk-toolchain-v1
+
+      - name: Installa GiteaPC
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          git clone https://gitea.planet-casio.com/Lephenixnoir/GiteaPC.git
+          cd GiteaPC
+          printf 'y\n\n' | ./install.sh
+
+      - name: Installa compilatore, fxSDK, gint
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          export PATH="$PATH:$HOME/.local/bin"
+          yes | giteapc install Lephenixnoir/sh-elf-gcc
+          yes | giteapc install Lephenixnoir/fxsdk
+          yes | giteapc install Lephenixnoir/gint
+
+      - name: Compila
+        run: |
+          export PATH="$PATH:$HOME/.local/bin"
+          fxsdk new progetto
+          cp ${{ matrix.app }}/main.c progetto/src/main.c
+          if [ -d ${{ matrix.app }}/assets-cg ]; then cp ${{ matrix.app }}/assets-cg/*.png progetto/assets-cg/; fi
+          cd progetto
+          fxsdk build-cg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.app }}
+          path: progetto/**/*.g3a
