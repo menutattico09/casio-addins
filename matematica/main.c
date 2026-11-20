@@ -24,7 +24,7 @@ static long leggi(const char *p, int y)
         drect(0, y, 395, y + 14, C_WHITE);
         dprint(10, y, C_BLACK, "%s %s_", p, b);
         dupdate();
-        int k = getkey();
+        int k = getkey().key;
         if(k == KEY_EXE && n > 0) break;
         if(k == KEY_DEL && n > 0) b[--n] = 0;
         if(k == KEY_NEG && n == 0) { b[n++] = '-'; b[n] = 0; }
@@ -123,7 +123,7 @@ int main(void)
         dprint(10, 90, C_BLACK, "4  Esadecimale");
         dprint(10, 205, C_BLACK, "EXIT: esci");
         dupdate();
-        int k = getkey();
+        int k = getkey().key;
         if(k == KEY_EXIT) return 1;
         if(k == KEY_1) app_mcd();
         if(k == KEY_2) app_ruffini();
